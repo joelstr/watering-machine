@@ -28,10 +28,10 @@ PubSubClient client(espClient);
 const char* ssid = "CCIZ";
 const char* password = "+1Makers2morrow";
 */
-const char* ssid = "CCGuest"; // wifi ap name
-const char* password = "Makersoftomorrow!"; // wifi password
+const char* ssid = "Hemliga bollen"; // wifi ap name
+const char* password = "joelsnatverk"; // wifi password
 
-const char* mqtt_server = "test.mosquitto.org"; // MQTT broker address
+const char* mqtt_server = "mqttserver.local"; // MQTT broker address
 
 unsigned long lastMsg = 0;
 #define MSG_BUFFER_SIZE (50)
@@ -156,10 +156,10 @@ void reConnect() {
     String clientId = "M5Stack-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect.
-    if (client.connect(clientId.c_str())) {
+    if (client.connect(clientId.c_str(),"m5stack", "211221")) {
       M5.Lcd.printf("\nSuccess\n");
       // Once connected, publish an announcement to the topic.
-      client.publish("knowit/M5Stack", "hello world");
+      client.publish("testTopic", "hello world");
       // ... and resubscribe.
       client.subscribe("knowit/color");
     } else {
