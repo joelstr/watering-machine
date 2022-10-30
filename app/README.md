@@ -5,7 +5,7 @@ An application part of the watering machine, written in Flutter.
 
 ## TODO
  * Add nice picture in app
- * Add nice app icon
+ * <s>Add nice app icon</s>
  * <s>Update address to broker when static IP inplace</s>
  * Change name of app
  * Add notifications when time to water
