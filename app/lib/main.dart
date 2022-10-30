@@ -1,6 +1,25 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 
-void main() {
+void main() async {
+  // client.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
+  //   final recMess = c![0].payload as MqttPublishMessage;
+  //   final pt =
+  //       MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+
+  //   /// The above may seem a little convoluted for users only interested in the
+  //   /// payload, some users however may be interested in the received publish message,
+  //   /// lets not constrain ourselves yet until the package has been in the wild
+  //   /// for a while.
+  //   /// The payload is a byte buffer, this will be specific to the topic
+  //   _counter = int.parse(pt);
+  //   print(
+  //       'EXAMPLE::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
+  //   print('');
+  // });
   runApp(const MyApp());
 }
 
@@ -48,17 +67,84 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  int _water = 0;
+  final _client = MqttServerClient('mqttserver.local', '');
 
-  void _incrementCounter() {
+  void _updateWater(int water) {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      _water = water;
     });
+  }
+
+  void _onConnected() {
+    _subscribe();
+    print(
+        'EXAMPLE::OnConnected client callback - Client connection was successful');
+    _updateWater(0);
+  }
+
+  void _onDisconnected() {
+    print("Disconnected");
+    _updateWater(0);
+  }
+
+  void _connect() async {
+    _client.setProtocolV311();
+    _client.keepAlivePeriod = 20;
+    _client.connectTimeoutPeriod = 2000; // milliseconds
+    _client.onConnected = _onConnected;
+    _client.onDisconnected = _onDisconnected;
+
+    final connMess = MqttConnectMessage()
+        .withClientIdentifier('Mqtt_MyClientUniqueId')
+        .withWillTopic(
+            'willtopic') // If you set this you must set a will message
+        .withWillMessage('My Will message')
+        .startClean() // Non persistent session for testing
+        .withWillQos(MqttQos.atLeastOnce)
+        .authenticateAs("m5stack", "211221");
+    print('EXAMPLE::Mosquitto client connecting....');
+    _client.connectionMessage = connMess;
+
+    /// Connect the client, any errors here are communicated by raising of the appropriate exception. Note
+    /// in some circumstances the broker will just disconnect us, see the spec about this, we however will
+    /// never send malformed messages.
+    try {
+      await _client.connect();
+    } on NoConnectionException catch (e) {
+      // Raised by the client when connection fails.
+      print('EXAMPLE::client exception - $e');
+      _client.disconnect();
+    } on SocketException catch (e) {
+      // Raised by the socket layer
+      print('EXAMPLE::socket exception - $e');
+      _client.disconnect();
+    }
+  }
+
+  void _subscribe() {
+    /// Ok, lets try a subscription
+    print('EXAMPLE::Subscribing to the testTopic topic');
+    const topic = 'testTopic'; // Not a wildcard topic
+    _client.subscribe(topic, MqttQos.atMostOnce);
+
+    _client.published!.listen((MqttPublishMessage message) {
+      final pt =
+          MqttPublishPayload.bytesToStringAsString(message.payload.message);
+      _updateWater(int.parse(pt));
+      print(
+          'EXAMPLE::Published notification:: topic is ${message.variableHeader!.topicName}, with Qos ${message.header!.qos}');
+    });
+  }
+
+  void _disconnect() {
+    _client.disconnect();
+    setState(() {});
   }
 
   @override
@@ -69,6 +155,19 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
+    /// Check we are connected
+    final connected =
+        _client.connectionStatus!.state == MqttConnectionState.connected;
+
+    if (connected) {
+      print('EXAMPLE::Mosquitto client connected');
+    } else {
+      /// Use status here rather than state if you also want the broker return code.
+      print(
+          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${_client.connectionStatus}');
+      _client.disconnect();
+    }
+
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
@@ -96,19 +195,19 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Text(
-              'You have pushed the button this many times:',
+              'Your plant is this thirsty:',
             ),
             Text(
-              '$_counter',
+              '$_water',
               style: Theme.of(context).textTheme.headline4,
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        onPressed: connected ? _disconnect : _connect,
+        tooltip: connected ? 'Disconnect' : 'Connect',
+        child: Icon(connected ? Icons.stop : Icons.play_arrow),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
