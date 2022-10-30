@@ -60,7 +60,7 @@ void loop() {
     reConnect();
   }
   client.loop();  //This function is called periodically to allow clients to process incoming messages and maintain connections to the server.
-  if (millis() - lasttime > 60000)
+  if (millis() - lasttime > 5000)
   {
     char cstr[10];
     itoa(adc_value,cstr,10);
