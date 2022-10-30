@@ -31,12 +31,16 @@ const char* password = "+1Makers2morrow";
 const char* ssid = "Hemliga bollen"; // wifi ap name
 const char* password = "joelsnatverk"; // wifi password
 
-const char* mqtt_server = "mqttserver.local"; // MQTT broker address
+const char* mqtt_server = "mqtt.joelstrand.se"; // MQTT broker address
 
 unsigned long lastMsg = 0;
 #define MSG_BUFFER_SIZE (50)
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
+int lasttime = 0;
+int adc_value = 123;
+
+#define PLANT_PIN 35
 
 void setupWifi();
 void callback(char* topic, byte* payload, unsigned int length);
@@ -56,19 +60,26 @@ void loop() {
     reConnect();
   }
   client.loop();  //This function is called periodically to allow clients to process incoming messages and maintain connections to the server.
-
+  if (millis() - lasttime > 60000)
+  {
+    char cstr[10];
+    itoa(adc_value,cstr,10);
+    pub_color(cstr);
+    lasttime = millis();
+  }
+  adc_value = analogRead(PLANT_PIN);
   //unsigned long now = millis();  //Obtain the host startup duration.
 
     if (M5.BtnA.wasPressed()) {
-      pub_color("r");
+      pub_color("1");
       ++value;
     }
     if (M5.BtnB.wasPressed()) {
-      pub_color("g");
+      pub_color("2");
       ++value;
     }
     if (M5.BtnC.wasPressed()) {
-      pub_color("k");
+      pub_color("3");
       ++value;
     }
 
@@ -82,7 +93,7 @@ void pub_color(char* col_char) {
       value);  //Format to the specified string and store it in MSG.
     M5.Lcd.print("Publish message: ");
     M5.Lcd.println(msg);
-    client.publish( "knowit/color", msg);  //Publishes a message to the specified topic.
+    client.publish( "testTopic", msg);  //Publishes a message to the specified topic.
     if (value % 12 == 0) { // every 12th messege clear the screen, and reset cursor
       M5.Lcd.clear();
       M5.Lcd.setCursor(0, 0);
