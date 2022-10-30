@@ -12,4 +12,4 @@ This just uses Mosquitto broker on a Raspberry PI. Seems to work out of the box.
 
 ## TODO
  * Add static IP
- * Route mqtt.joelstrand.se to broker
+ * <s>Route mqtt.joelstrand.se to broker</s>

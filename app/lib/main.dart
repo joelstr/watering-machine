@@ -68,7 +68,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _water = 0;
-  final _client = MqttServerClient('mqttserver.local', '');
+  final _client = MqttServerClient('mqtt.joelstrand.se', '');
 
   void _updateWater(int water) {
     setState(() {
