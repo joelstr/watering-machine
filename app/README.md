@@ -1,16 +1,16 @@
-# app
+# Watering app
 
-A new Flutter project.
+An application part of the watering machine, written in Flutter.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## TODO
+ * Add nice picture in app
+ * Add nice app icon
+ * Update address to broker when static IP inplace
+ * Change name of app
+ * Add notifications when time to water
+ * Publish for android and web
+ * Add to website if possible
+ * Change color depending on thistyness?
+ * Add possibility to control pump (sounds dangerous)
+ * Add more plants
